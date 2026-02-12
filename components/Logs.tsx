@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SyncLogEntry, SyncStatus } from '../types';
-import { fetchLogs } from '../services/mockApi';
+import { fetchLogs } from '../services/api';
 import { Search, Filter, RefreshCw } from 'lucide-react';
 
 const Logs: React.FC = () => {
@@ -11,8 +11,12 @@ const Logs: React.FC = () => {
 
   const loadLogs = async () => {
     setIsLoading(true);
-    const data = await fetchLogs();
-    setLogs(data);
+    try {
+        const data = await fetchLogs();
+        setLogs(data);
+    } catch (e) {
+        console.error(e);
+    }
     setIsLoading(false);
   };
 

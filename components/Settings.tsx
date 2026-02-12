@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Save, ShieldCheck, Database, ShoppingBag, AlertCircle, Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { testOdooConnection } from '../services/mockApi';
+import { testOdooConnection } from '../services/api';
 
 const Settings: React.FC = () => {
   const [isTestingOdoo, setIsTestingOdoo] = useState(false);
@@ -11,7 +11,7 @@ const Settings: React.FC = () => {
     url: 'https://odoo.mycompany.com',
     dbName: 'odoo_prod',
     username: 'admin',
-    apiKey: '••••••••••••••••'
+    apiKey: ''
   });
 
   const handleOdooChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,15 +27,18 @@ const Settings: React.FC = () => {
     setIsTestingOdoo(true);
     setOdooTestResult(null);
     
-    // Simulate API call with current state values
-    const result = await testOdooConnection({
-        url: odooConfig.url,
-        db: odooConfig.dbName,
-        username: odooConfig.username,
-        apiKey: odooConfig.apiKey
-    });
+    try {
+        const result = await testOdooConnection({
+            url: odooConfig.url,
+            dbName: odooConfig.dbName,
+            username: odooConfig.username,
+            apiKey: odooConfig.apiKey
+        });
+        setOdooTestResult(result);
+    } catch (e) {
+        setOdooTestResult({ success: false, message: "Network error connecting to API" });
+    }
     
-    setOdooTestResult(result);
     setIsTestingOdoo(false);
   };
 
@@ -93,7 +96,8 @@ const Settings: React.FC = () => {
                 name="apiKey"
                 value={odooConfig.apiKey}
                 onChange={handleOdooChange}
-                className="w-full rounded-md border-gray-300 bg-gray-50 text-gray-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" 
+                placeholder="Enter API Key"
+                className="w-full rounded-md border-gray-300 bg-white text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" 
               />
             </div>
           </div>
@@ -133,42 +137,22 @@ const Settings: React.FC = () => {
           <div className="p-6 space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">App ID (Client ID)</label>
-              <input type="text" defaultValue="MyCompany-App-PRD-123456" className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm p-2 border" />
+              <input type="text" defaultValue="" placeholder="Enter App ID" className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm p-2 border" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cert ID (Client Secret)</label>
-              <input type="password" value="••••••••" readOnly className="w-full rounded-md border-gray-300 bg-gray-50 text-gray-500 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm p-2 border" />
+              <input type="password" value="" placeholder="Enter Cert ID" className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm p-2 border" />
             </div>
             <div className="pt-2">
-               <div className="flex items-center space-x-2 text-sm text-green-600 mb-2">
+               <div className="flex items-center space-x-2 text-sm text-gray-400 mb-2">
                   <ShieldCheck size={16} />
-                  <span>OAuth Token Active</span>
+                  <span>OAuth Token Status: Unknown</span>
                </div>
                <button className="w-full py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                 Refresh OAuth Token
+                 Authenticate with eBay
                </button>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Sync Rules */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <AlertCircle className="mr-2 text-gray-400" size={20}/>
-            Business Rules
-        </h3>
-        <div className="grid gap-6 md:grid-cols-2">
-           <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Safety Stock Buffer</label>
-              <p className="text-xs text-gray-500 mb-2">If Odoo qty is less than this, 0 is sent to eBay.</p>
-              <input type="number" defaultValue="2" className="w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
-           </div>
-           <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Order Import Interval (Minutes)</label>
-              <p className="text-xs text-gray-500 mb-2">How often to poll eBay for new orders.</p>
-              <input type="number" defaultValue="15" className="w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
-           </div>
         </div>
       </div>
 

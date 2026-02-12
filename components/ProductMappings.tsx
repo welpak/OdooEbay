@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Package, Link as LinkIcon, AlertTriangle } from 'lucide-react';
 import { ProductMapping } from '../types';
-import { fetchMappings } from '../services/mockApi';
+import { fetchMappings } from '../services/api';
 
 const ProductMappings: React.FC = () => {
     const [mappings, setMappings] = useState<ProductMapping[]>([]);
@@ -9,8 +9,12 @@ const ProductMappings: React.FC = () => {
 
     useEffect(() => {
         const load = async () => {
-            const data = await fetchMappings();
-            setMappings(data);
+            try {
+                const data = await fetchMappings();
+                setMappings(data);
+            } catch (e) {
+                console.error(e);
+            }
             setIsLoading(false);
         };
         load();
@@ -39,7 +43,7 @@ const ProductMappings: React.FC = () => {
                         {isLoading ? (
                              <tr><td colSpan={4} className="p-6 text-center">Loading...</td></tr>
                         ) : (
-                            mappings.map((m) => (
+                            mappings.length > 0 ? mappings.map((m) => (
                                 <tr key={m.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center space-x-3">
@@ -69,7 +73,9 @@ const ProductMappings: React.FC = () => {
                                         {new Date(m.lastSyncedAt).toLocaleDateString()}
                                     </td>
                                 </tr>
-                            ))
+                            )) : (
+                                <tr><td colSpan={4} className="p-6 text-center text-gray-400">No mappings found.</td></tr>
+                            )
                         )}
                     </tbody>
                 </table>

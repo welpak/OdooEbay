@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, CheckCircle, AlertTriangle, Clock, ShoppingCart, Archive, ArrowRight } from 'lucide-react';
+import { RefreshCw, CheckCircle, Clock, ShoppingCart, Archive, ArrowRight, AlertTriangle } from 'lucide-react';
 import { SystemHealth, SyncLogEntry, SyncType, SyncStatus } from '../types';
-import { fetchHealth, fetchLogs, triggerSync } from '../services/mockApi';
+import { fetchHealth, fetchLogs, triggerSync } from '../services/api';
 
 interface DashboardProps {
     onNavigate: (tab: string) => void;
@@ -11,22 +11,49 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [recentLogs, setRecentLogs] = useState<SyncLogEntry[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
+  const loadData = async () => {
+    try {
       const healthData = await fetchHealth();
       setHealth(healthData);
       const logs = await fetchLogs();
       setRecentLogs(logs.slice(0, 5));
-    };
+      setError(null);
+    } catch (err) {
+      console.error("Failed to load dashboard data", err);
+      setError("Failed to connect to backend service.");
+    }
+  };
+
+  useEffect(() => {
     loadData();
-  }, [isSyncing]);
+    const interval = setInterval(loadData, 10000); // Poll every 10s
+    return () => clearInterval(interval);
+  }, []);
 
   const handleManualSync = async () => {
     setIsSyncing(true);
-    await triggerSync(SyncType.INVENTORY);
+    try {
+        await triggerSync(SyncType.INVENTORY);
+        await loadData(); // Refresh logs immediately
+    } catch (e) {
+        console.error("Sync trigger failed", e);
+        alert("Failed to trigger sync.");
+    }
     setIsSyncing(false);
   };
+
+  if (error && !health) {
+      return (
+          <div className="p-8 text-center bg-red-50 rounded-xl border border-red-200">
+              <AlertTriangle className="mx-auto text-red-500 mb-2" size={32} />
+              <h3 className="text-lg font-bold text-red-700">System Unavailable</h3>
+              <p className="text-red-600 mb-4">{error}</p>
+              <button onClick={loadData} className="px-4 py-2 bg-white border border-red-300 rounded hover:bg-red-50">Retry Connection</button>
+          </div>
+      );
+  }
 
   return (
     <div className="space-y-6">
@@ -50,7 +77,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-green-100 text-green-600 rounded-lg">
+          <div className={`p-3 rounded-lg ${health?.redisConnected ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
             <CheckCircle size={24} />
           </div>
           <div>
