@@ -1,0 +1,5 @@
+{
+  "name": "Odoo-eBay Sync Engine",
+  "description": "A dashboard to monitor and control synchronization between Odoo 19 and eBay Seller Accounts.",
+  "requestFramePermissions": []
+}
