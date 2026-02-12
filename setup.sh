@@ -16,18 +16,20 @@ fi
 
 # 2. Build and Start Services
 echo "Building and starting services..."
-docker compose up -d --build
+# Force build and recreate to pick up Dockerfile and command changes
+docker compose down -v --remove-orphans || true
+docker compose up -d --build --force-recreate
 
-# 3. Wait for DB
-echo "Waiting for database to initialize..."
-sleep 10
+# 3. Wait for DB and Migrations
+echo "Waiting for backend to initialize (15s)..."
+sleep 15
 
-# 4. Run Migrations
-echo "Running database migrations..."
-docker compose exec backend python manage.py migrate
+# 4. Check status
+echo "Checking container status..."
+docker compose ps
 
 echo "------------------------------------------------"
 echo "Setup Complete!"
 echo "Frontend: http://localhost:3000"
-echo "Backend API: http://localhost:8000/api/"
+echo "Backend API: http://localhost:8000/api/health/"
 echo "------------------------------------------------"
